@@ -1,0 +1,151 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 2.0;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+/*body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+*/
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+/* === Fondo institucional con marca de agua === */
+/* === Fondo institucional con efecto grabado === */
+/* === Layout de página: columna + fondo === */
+body {
+  position: relative;
+  min-height: 100vh;
+  margin: 0;
+  display: flex;              /* para centrar el wrapper si lo deseas */
+  justify-content: center;
+  background-color: #f2f4f7;
+  overflow-x: hidden;
+}
+
+/* Capa del logo institucional como marca de agua */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;                   /* top/left/right/bottom: 0 */
+  background: url("/logoplateado2.jpg") no-repeat center center;
+  background-size: 50%;
+  opacity: 0.3;
+  pointer-events: none; 
+  filter: grayscale(100%) contrast(120%) brightness(100%) blur(1px);
+  z-index: 0;                 /* 👈 detrás del contenido */
+}
+
+/* Asegura que el contenido quede encima del fondo */
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* centra horizontal */
+  justify-content: flex-start;
+}
+/* Contenedor vertical de toda la app: header + main + footer */
+.app-shell {
+  width: min(1100px, 96vw);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;     /* 👈 importantísimo para el footer */
+  gap: 16px;
+  padding: 24px 12px 16px;
+}
+
+/* El main empuja el footer hacia abajo */
+.app-main {
+  flex: 1;                    /* 👈 para que el footer quede al final */
+  display: flex;
+  justify-content: center;
+}
+
+/* Tarjeta del formulario (si no usas la que ya tienes en form.css) */
+.form-card {
+  width: min(680px, 95vw);
+  background: #fff;
+  border: 1px solid #dfe3eb;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  padding: 28px 24px 20px;
+}
+
+/* Footer fijo al final, legible sobre el fondo */
+.site-footer {
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #1a2b4f;             /* azul sobrio */
+  opacity: .85;
+  padding: 8px 4px 18px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  body::before {
+    background-size: 72%;
+    background-position: center top 18%;
+    opacity: 0.10;
+  }
+  .form-card { padding: 22px 18px 16px; }
+}

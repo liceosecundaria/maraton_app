@@ -1,0 +1,124 @@
+/* --- Contenedor de la tarjeta (formulario) --- */
+.form-card {
+    width: min(760px, 92vw);
+    margin: 16px auto;
+    padding: 36px 36px 28px;
+    border: 1px solid #dfe3eb;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  }
+  
+  /* --- Bloque de campo --- */
+  .form-group {
+    margin-bottom: 22px;
+  }
+  
+  /* --- Label --- */
+  .form-label {
+    display: block;
+    font-weight: 700;
+    font-size: 1.15rem;   /* base desktop */
+    margin-bottom: 8px;
+    color: #001B5E;
+    letter-spacing: 0.2px;
+  }
+  
+  /* --- Inputs y selects --- */
+  .form-field {
+    width: 100%;
+    font-size: 1rem;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  .form-field:focus {
+    outline: none;
+    border-color: #001B5E;
+    box-shadow: 0 0 0 3px rgba(0,27,94,0.12);
+  }
+  
+  /* --- Botón --- */
+  .btn-primary {
+    width: 100%;
+    background: #001B5E;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  }
+  
+  .btn-primary:hover {
+    filter: brightness(1.05);
+  }
+  
+  /* --- Estado / mensajes --- */
+  .form-status {
+    text-align: center;
+    margin-top: 24px;
+    min-height: 26px;
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  /* ===========================
+     📱 Mobile (≤ 480px)
+     =========================== */
+  @media (max-width: 480px) {
+    .form-card {
+      width: 94vw;
+      padding: 20px 16px 18px;
+      border-radius: 12px;
+    }
+  
+    .form-label {
+      font-size: 1.2rem;         /* más grande para legibilidad */
+      margin-bottom: 10px;
+    }
+  
+    .form-field {
+      font-size: 1.05rem;
+      padding: 14px 14px;        /* tap target cómodo */
+    }
+  
+    .btn-primary {
+      padding: 16px 18px;
+      font-size: 1.1rem;
+    }
+  
+    .form-status {
+      font-size: 1.05rem;
+    }
+  }
+  
+  /* ===========================
+     📲 Tablet (481px – 768px)
+     =========================== */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .form-card {
+      width: min(640px, 94vw);
+      padding: 28px 24px 22px;
+    }
+  
+    .form-label {
+      font-size: 1.18rem;
+    }
+  
+    .form-field {
+      font-size: 1.05rem;
+      padding: 12px 14px;
+    }
+  
+    .btn-primary {
+      padding: 15px 18px;
+      font-size: 1.08rem;
+    }
+  }
+  
