@@ -116,7 +116,7 @@ class ExportParticipantsCSV(APIView):
     Descarga un CSV con todos los participantes.
     GET /api/participants/export/
     """
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         qs = Participant.objects.all().order_by("plantel", "role", "full_name")
 
         response = HttpResponse(content_type="text/csv")
@@ -124,6 +124,7 @@ class ExportParticipantsCSV(APIView):
 
         writer = csv.writer(response)
         writer.writerow([
+            "ID",
             "Folio",
             "Nombre participante",
             "Plantel",
@@ -135,9 +136,10 @@ class ExportParticipantsCSV(APIView):
 
         for p in qs:
             writer.writerow([
-                p.clave or "",
+                p.id,
+                p.clave,
+                p.plantel,
                 p.full_name or "",
-                p.plantel or "",
                 p.child_name or "",
                 p.grado or "",
                 p.role or "",
