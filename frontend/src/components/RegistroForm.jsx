@@ -45,6 +45,7 @@ function RegistroForm() {
         }
       );
       
+      
       const ct = response.headers["content-type"] || "";
   
       // Si el backend devolvió PDF correcto

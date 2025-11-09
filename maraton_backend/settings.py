@@ -45,8 +45,9 @@ INSTALLED_APPS = [
 # Middleware
 # ---------------------------------------------------------------------
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # <- PRIMERO de los middlewares "reales"
+
     "django.middleware.security.SecurityMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -133,7 +134,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS / CSRF para frontend (local + dominio Hostinger)
 # ---------------------------------------------------------------------
 # Para simplificar ahora:
-#CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Si quieres dejarlo más restringido, comenta la línea de arriba
 # y usa sólo CORS_ALLOWED_ORIGINS:
