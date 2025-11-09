@@ -133,14 +133,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS / CSRF para frontend (local + dominio Hostinger)
 # ---------------------------------------------------------------------
 # Para simplificar ahora:
-CORS_ALLOW_ALL_ORIGINS = False
+#CORS_ALLOW_ALL_ORIGINS = True
 
 # Si quieres dejarlo más restringido, comenta la línea de arriba
 # y usa sólo CORS_ALLOWED_ORIGINS:
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",                         # desarrollo Vite
-    "https://maraton.orgullosamenteliceo.com.mx",    # tu dominio en Hostinger
-]
+#CORS_ALLOWED_ORIGINS = [
+ #   "http://localhost:5173",                         # desarrollo Vite
+#    "https://maraton.orgullosamenteliceo.com.mx",    # tu dominio en Hostinger
+#]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",

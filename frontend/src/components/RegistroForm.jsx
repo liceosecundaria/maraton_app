@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "../form.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 
 function RegistroForm() {
   const [formData, setFormData] = useState({
@@ -38,8 +39,12 @@ function RegistroForm() {
       const response = await axios.post(
         "https://maraton-lma-backend.onrender.com/api/register/",
         payload,
-        { responseType: "arraybuffer", validateStatus: () => true }
+        {
+          responseType: "arraybuffer",
+          validateStatus: () => true,
+        }
       );
+      
       const ct = response.headers["content-type"] || "";
   
       // Si el backend devolvió PDF correcto
