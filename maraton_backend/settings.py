@@ -34,7 +34,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = ["*"]
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -93,13 +94,11 @@ WSGI_APPLICATION = 'maraton_backend.wsgi.application'
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL",
-            f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-        ),
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
     )
 }
+
 
 
 
@@ -138,7 +137,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -175,4 +178,11 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",              # desarrollo
+    "https://maraton.orgullosamenteliceo.com.mx"
+    # aquí pondremos después tu dominio de Hostinger, por ejemplo:
+    # "https://maraton.mi-colegio.mx",
 ]
