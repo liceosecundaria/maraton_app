@@ -36,12 +36,10 @@ function RegistroForm() {
   
     try {
       const response = await axios.post(
-        "https://maraton-backend.onrender.com/api",
+        "https://maraton-lma-backend.onrender.com/api/register/",
         payload,
         { responseType: "arraybuffer", validateStatus: () => true }
       );
-      
-  
       const ct = response.headers["content-type"] || "";
   
       // Si el backend devolvió PDF correcto
