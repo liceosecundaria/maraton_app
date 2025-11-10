@@ -122,3 +122,90 @@
     }
   }
   
+  /* ====== Encabezado general ====== */
+.site-header {
+  display: flex;
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+.site-header-inner {
+  width: 100%;
+  max-width: 1100px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+}
+
+.site-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.site-logo,
+.site-mascota {
+  height: 170px;
+}
+
+.site-title {
+  font-size: 3.6rem;
+  font-weight: 900;
+  color: #001b5e;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.site-title-bars {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.site-title-bars .bar {
+  height: 15px;
+  width: 250px;
+  border-radius: 2px;
+}
+
+.bar-azul  { background: #003366; }
+.bar-roja  { background: #c62828; }
+.bar-verde { background: #2e7d32; }
+
+/* ====== Versión móvil ====== */
+@media (max-width: 768px) {
+  .site-header-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 14px 10px;
+    gap: 10px;
+  }
+
+  .site-header-left {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .site-logo,
+  .site-mascota {
+    height: 100px;
+  }
+
+  .site-title {
+    font-size: 1.8rem; /* mucho más razonable en celular */
+  }
+
+  .site-title-bars {
+    gap: 4px;
+  }
+
+  .site-title-bars .bar {
+    height: 10px;
+    width: 140px;
+  }
+}

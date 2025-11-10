@@ -21,18 +21,17 @@ function RegistroForm() {
       [e.target.name]: e.target.value,
     });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatusMsg("Generando gafetes...");
+    setStatusMsg("Generando gafete...");
   
     // Normaliza lo que envías al backend
     const payload = {
       full_name: (formData.full_name || "").trim(),
-      plantel: (formData.plantel || "").trim(),         // "Primaria" | "Secundaria" | "Preparatoria"
+      plantel: (formData.plantel || "").trim(),
       child_name: (formData.child_name || "").trim(),
       grado: (formData.grado || "").trim(),
-      role: ((formData.role || "").toUpperCase()).trim() // "ACOMPAÑANTE MUJER" | "ALUMNO" | etc.
+      role: ((formData.role || "").toUpperCase()).trim(),
     };
   
     try {
@@ -42,14 +41,18 @@ function RegistroForm() {
         {
           responseType: "arraybuffer",
           validateStatus: () => true,
+          timeout: 90000, // 90 segundos (no 900000 😅)
         }
       );
-      
-      
+  
       const ct = response.headers["content-type"] || "";
   
-      // Si el backend devolvió PDF correcto
-      if (response.status >= 200 && response.status < 300 && ct.includes("application/pdf")) {
+      // ✅ Si el backend devolvió un PDF correcto
+      if (
+        response.status >= 200 &&
+        response.status < 300 &&
+        ct.includes("application/pdf")
+      ) {
         const blob = new Blob([response.data], { type: "application/pdf" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -58,34 +61,55 @@ function RegistroForm() {
         document.body.appendChild(a);
         a.click();
         a.remove();
+        window.URL.revokeObjectURL(url);
+  
         setStatusMsg("Listo ✅ Se descargó tu gafete.");
         return;
       }
   
-     // >>> si no es PDF, intenta leer JSON de error o texto
-  let msg = `Error ${response.status}`;
-  try {
-    const text = new TextDecoder().decode(response.data);
-    // intenta JSON
-    try {
-      const json = JSON.parse(text);
-      msg =
-        typeof json === "string"
-          ? json
-          : Object.entries(json)
-              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-              .join(" • ");
-    } catch {
-      msg = text; // HTML o texto plano del error
+      // ❌ No vino PDF: intentamos leer el mensaje de error
+      let msg = `Error ${response.status || ""}`.trim();
+  
+      try {
+        const text = new TextDecoder().decode(response.data);
+  
+        try {
+          // ¿Es JSON?
+          const json = JSON.parse(text);
+          msg =
+            typeof json === "string"
+              ? json
+              : Object.entries(json)
+                  .map(([k, v]) =>
+                    `${k}: ${Array.isArray(v) ? v.join(", ") : v}`
+                  )
+                  .join(" • ");
+        } catch {
+          // No era JSON, usamos el texto tal cual (HTML o texto plano)
+          if (text) msg = text;
+        }
+      } catch {
+        // Si algo falla aquí, dejamos msg como está
+      }
+  
+      setStatusMsg(`Error al registrar. ${msg || "Revisa tus datos e inténtalo de nuevo."}`);
+    } catch (err) {
+      console.error("FETCH_ERROR", err);
+  
+      // Aquí se atrapan cosas de red / timeout
+      if (err.code === "ECONNABORTED") {
+        setStatusMsg(
+          "El servidor tardó demasiado en responder. Intenta de nuevo en unos segundos."
+        );
+      } else {
+        setStatusMsg(
+          "Error de red. Verifica tu conexión a internet y vuelve a intentar."
+        );
+      }
     }
-  } catch {}
-  setStatusMsg(`Error al registrar. ${msg}`);
-} catch (err) {
-  console.error("FETCH_ERROR", err);
-  setStatusMsg(`Error al registrar. ${String(err?.message || err)}`);
-}
   };
   
+ 
 
   return (
     <div className="form-card">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = "https://maraton-lma-backend.onrender.com/api";
 
 
 // Debajo de los imports y antes del export default function AdminPanel()...
@@ -50,7 +50,7 @@ export default function AdminPanel() {
   // Descargar CSV como archivo
 const onDownloadCSV = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/participants/export/`, {
+      const res = await axios.get(`${API_BASE}/participants/export_csv/`, {
         responseType: "blob",
         validateStatus: () => true,
       });
