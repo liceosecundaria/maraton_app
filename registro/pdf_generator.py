@@ -119,7 +119,7 @@ def generar_credencial_pdf(participant):
         c.line(ix + margen_lateral, base - 16, ix + iw - margen_lateral, base - 16)
 
         # =================== CONTENIDO ===================
-        y = header_top - header_h - 60   # 👈 baja TODO el bloque 40 puntos
+        y = header_top - header_h - 45   # 👈 baja TODO el bloque 40 puntos
 
         nombre_adulto = (participant.full_name or "").upper()
         nombre_alumno = (participant.child_name or "").upper()
@@ -131,7 +131,7 @@ def generar_credencial_pdf(participant):
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 28)
             c.drawCentredString(cx, y, nombre_adulto or "ACOMPAÑANTE")
-            y -= 50
+            y -= 36
 
             c.setFillColor(GRIS)
             c.setFont("Helvetica", 13)
@@ -152,7 +152,7 @@ def generar_credencial_pdf(participant):
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 30)
             c.drawCentredString(cx, y, nombre_alumno or "ALUMNO")
-            y -= 50
+            y -= 36
 
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 18)
