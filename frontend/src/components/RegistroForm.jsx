@@ -115,7 +115,7 @@ function RegistroForm() {
     <div className="form-card">
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label className="form-label">Nombre completo (quien corre):</label>
+          <label className="form-label">Nombre completo (Tutor Responsable):</label>
           <input
             type="text"
             name="full_name"
@@ -154,7 +154,7 @@ function RegistroForm() {
         </div>
   
         <div className="form-group">
-  <label className="form-label">Grado del alumno/hijo(a):</label>
+  <label className="form-label">Grado del alumno:</label>
   <select
     name="grado"
     value={formData.grado}
@@ -194,10 +194,18 @@ function RegistroForm() {
             className="form-field"
           >
             <option value="">Selecciona</option>
-            <option value="ACOMPAÑANTE HOMBRE">Acompañante Hombre</option>
-            <option value="ACOMPAÑANTE MUJER">Acompañante Mujer</option>
-            <option value="ABUELITO">Abuelito</option>
-            <option value="ABUELITA">Abuelita</option>
+            <option value="ACOMPAÑANTE HOMBRE">Acompañante Hombres</option>
+            <option value="ACOMPAÑANTE MUJER">Acompañante Mujeres</option>
+            <option value="ABUELITO">Abuelito (hombres)</option>
+            <option value="ABUELITA">Abuelita (mujeres)</option>
+            <option value="ALUMNOS LMA BAJAH">ALUMNOS LMA Primaria (primaria baja hombres 1°, 2° y 3°)</option>
+            <option value="ALUMNOS LMA BAJAM">ALUMNOS LMA Primaria (primaria baja mujeres 1°, 2° y 3°)</option>
+            <option value="ALUMNOS LMA ALTAM">ALUMNOS LMA Primaria (primaria baja mujeres 4°, 5° y 6°)</option>
+            <option value="ALUMNOS LMA ALTAH">ALUMNOS LMA Primaria (primaria baja hombres 4°, 5° y 6°)</option>
+            <option value="ALUMNOS LMA SECH">ALUMNOS LMA Secundaria (hombres)</option>
+            <option value="ALUMNOS LMA SECM">ALUMNOS LMA Secundaria (mujeres)</option>
+            <option value="ALUMNOS LMA PREPH">ALUMNOS LMA Preparatoria (hombres)</option>
+            <option value="ALUMNOS LMA PREPM">ALUMNOS LMA Preparatoria (mujeres)</option>
  
           </select>
         </div>

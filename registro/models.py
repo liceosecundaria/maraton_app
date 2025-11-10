@@ -29,12 +29,20 @@ class Participant(models.Model):
         ("Preparatoria", "Preparatoria"),
     ]
     ROLE_CHOICES = [
-        ("ALUMNO", "Alumno"),
-        ("TUTOR", "Tutor"),
-        ("ACOMPAÑANTE HOMBRE", "Acompañante Hombre"),
+      
+        ("ACOMPAÑANTE HOMBRE", "Acompañante Hombres"),
         ("ACOMPAÑANTE MUJER", "Acompañante Mujer"),
         ("ABUELITO", "Abuelito"),
         ("ABUELITA", "Abuelita"),
+        ("ALUMNOS LMA BAJAH","ALUMNOS LMA Primaria (primaria baja hombres 1°, 2° y 3°)"),
+        ("ALUMNOS LMA BAJAM","ALUMNOS LMA Primaria (primaria baja mujeres 1°, 2° y 3°)"),
+        ("ALUMNOS LMA ALTAM","ALUMNOS LMA Primaria (primaria baja mujeres 4°, 5° y 6°)"),
+        ("ALUMNOS LMA ALTAH","ALUMNOS LMA Primaria (primaria baja hombres 4°, 5° y 6°)"),
+        ("ALUMNOS LMA SECH","ALUMNOS LMA Secundaria (hombres)"),
+        ("ALUMNOS LMA SECM","ALUMNOS LMA Secundaria (mujeres)"),
+        ("ALUMNOS LMA PREPH","ALUMNOS LMA Preparatoria (hombres)"),
+        ("ALUMNOS LMA PREPM","ALUMNOS LMA Preparatoria (mujeres)"),     
+   
     ]
 
     full_name = models.CharField(max_length=120)
