@@ -50,7 +50,7 @@ export default function App() {
       </div>
     </div>
 
-    <img src={zorro} alt="Zorro" className="site-mascota" />
+    <img src={zorro} alt="Zorro" className="site-mascota"  onClick={openAdmin}/>
   </div>
 </header>
 
