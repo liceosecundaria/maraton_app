@@ -185,7 +185,7 @@ function RegistroForm() {
 
   
         <div className="form-group">
-          <label className="form-label">Eres:</label>
+          <label className="form-label">Categoría:</label>
           <select
             name="role"
             value={formData.role}
@@ -200,13 +200,12 @@ function RegistroForm() {
             <option value="ABUELITA">Abuelita (mujeres)</option>
             <option value="ALUMNOS LMA BAJAH">ALUMNOS LMA Primaria (primaria baja hombres 1°, 2° y 3°)</option>
             <option value="ALUMNOS LMA BAJAM">ALUMNOS LMA Primaria (primaria baja mujeres 1°, 2° y 3°)</option>
-            <option value="ALUMNOS LMA ALTAM">ALUMNOS LMA Primaria (primaria baja mujeres 4°, 5° y 6°)</option>
-            <option value="ALUMNOS LMA ALTAH">ALUMNOS LMA Primaria (primaria baja hombres 4°, 5° y 6°)</option>
+            <option value="ALUMNOS LMA ALTAM">ALUMNOS LMA Primaria (primaria alta mujeres 4°, 5° y 6°)</option>
+            <option value="ALUMNOS LMA ALTAH">ALUMNOS LMA Primaria (primaria alta hombres 4°, 5° y 6°)</option>
             <option value="ALUMNOS LMA SECH">ALUMNOS LMA Secundaria (hombres)</option>
             <option value="ALUMNOS LMA SECM">ALUMNOS LMA Secundaria (mujeres)</option>
             <option value="ALUMNOS LMA PREPH">ALUMNOS LMA Preparatoria (hombres)</option>
             <option value="ALUMNOS LMA PREPM">ALUMNOS LMA Preparatoria (mujeres)</option>
- 
           </select>
         </div>
   

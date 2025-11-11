@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/lauraalvarez/Documents/LICEO/Ciclo 25-26/maraton_app/venv/bin/python3.11" "$0" "$@"
+'''exec' "/Users/lauraalvarez/Documents/LICEO/Ciclo 25-26/maraton_app/venv/bin/python" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re
