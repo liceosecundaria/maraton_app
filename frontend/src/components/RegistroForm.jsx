@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import "../form.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
+const API_BASE = "https://maraton-lma-backend.onrender.com/api";
+
 
 function RegistroForm() {
   const [formData, setFormData] = useState({
@@ -36,14 +37,15 @@ function RegistroForm() {
   
     try {
       const response = await axios.post(
-        "https://maraton-lma-backend.onrender.com/api/register/",
+        `${API_BASE}/register/`,
         payload,
         {
           responseType: "arraybuffer",
           validateStatus: () => true,
-          timeout: 90000, // 90 segundos (no 900000 😅)
+          timeout: 90000,
         }
       );
+      
   
       const ct = response.headers["content-type"] || "";
   

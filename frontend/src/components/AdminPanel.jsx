@@ -86,7 +86,7 @@ const onDownloadCSV = async () => {
       alert("Escribe un folio o id");
       return;
     }
-    const url = `${API_BASE}/participants/reprint/?q=${encodeURIComponent(q)}`;
+    const url = `${API_BASE}/participants/reprint/?q=${encodeURIComponent(_blank)}`;
     window.open(url, "_blank"); // Deja que el navegador lo descargue/abra
   };
 
