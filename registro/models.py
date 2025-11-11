@@ -1,5 +1,3 @@
-# registro/models.py
-import re
 from django.db import models
 
 PLANTEL_CHOICES = [
@@ -17,22 +15,22 @@ ROLE_CHOICES = [
     ("ALUMNOS LMA BAJAM", "ALUMNOS LMA Primaria (primaria baja mujeres 1°, 2° y 3°)"),
     ("ALUMNOS LMA ALTAM", "ALUMNOS LMA Primaria (primaria alta mujeres 4°, 5° y 6°)"),
     ("ALUMNOS LMA ALTAH", "ALUMNOS LMA Primaria (primaria alta hombres 4°, 5° y 6°)"),
-    ("ALUMNOS LMA SECH",  "ALUMNOS LMA Secundaria (hombres)"),
-    ("ALUMNOS LMA SECM",  "ALUMNOS LMA Secundaria (mujeres)"),
+    ("ALUMNOS LMA SECH", "ALUMNOS LMA Secundaria (hombres)"),
+    ("ALUMNOS LMA SECM", "ALUMNOS LMA Secundaria (mujeres)"),
     ("ALUMNOS LMA PREPH", "ALUMNOS LMA Preparatoria (hombres)"),
     ("ALUMNOS LMA PREPM", "ALUMNOS LMA Preparatoria (mujeres)"),
 ]
 
 
 class Participant(models.Model):
-    full_name  = models.CharField(max_length=255)
+    full_name  = models.CharField(max_length=150)
     plantel    = models.CharField(max_length=20, choices=PLANTEL_CHOICES)
-    child_name = models.CharField(max_length=255, blank=True, null=True)
-    grado      = models.CharField(max_length=255, blank=True, null=True)
-    role       = models.CharField(max_length=60, choices=ROLE_CHOICES)
+    child_name = models.CharField(max_length=150, blank=True, null=True)
+    grado      = models.CharField(max_length=120, blank=True, null=True)
+    role       = models.CharField(max_length=40, choices=ROLE_CHOICES)
 
     # FOLIO
-    clave      = models.CharField(
+    clave = models.CharField(
         max_length=40,
         blank=True,
         editable=False,
@@ -50,12 +48,17 @@ class Participant(models.Model):
         Primaria0001, Primaria0002, Secundaria0001, etc.
         Independiente de la categoría / role.
         """
+        import re
+        from django.db import transaction
+
         creating = self.pk is None
 
-        # Guardar primero para tener self.id
+        # guardamos primero para tener self.id
         super().save(*args, **kwargs)
 
         if creating and not self.clave:
+            from .models import Participant  # import local por seguridad
+
             prefix_map = {
                 "Primaria": "Primaria",
                 "Secundaria": "Secundaria",
@@ -63,19 +66,20 @@ class Participant(models.Model):
             }
             prefix = prefix_map.get(self.plantel, "GEN")
 
-            # Buscar el último folio de ese plantel
-            last = (
-                Participant.objects
-                .filter(clave__startswith=prefix)
-                .order_by("-id")
-                .first()
-            )
+            with transaction.atomic():
+                last = (
+                    Participant.objects
+                    .select_for_update()
+                    .filter(clave__startswith=prefix)
+                    .order_by("-id")
+                    .first()
+                )
 
-            num = 1
-            if last and last.clave:
-                m = re.search(r"(\d+)$", last.clave)
-                if m:
-                    num = int(m.group(1)) + 1
+                num = 1
+                if last and last.clave:
+                    m = re.search(r"(\d+)$", last.clave)
+                    if m:
+                        num = int(m.group(1)) + 1
 
-            self.clave = f"{prefix}{num:04d}"
-            super().save(update_fields=["clave"])
+                self.clave = f"{prefix}{num:04d}"
+                super().save(update_fields=["clave"])
