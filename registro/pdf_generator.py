@@ -196,14 +196,10 @@ def generar_credencial_pdf(participant: Participant) -> str:
             # Grado
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 18)
-            c.drawCentredString(cx, y, f"GRADO: {grado_txt or '--'}")
+            c.drawCentredString(cx, y, f"GRADO: {grado_txt}")
             y -= 40
 
-            # Categoría del alumno (misma categoría que el registro)
-            c.setFillColor(AZUL)
-            c.setFont("Helvetica-Bold", 16)
-            c.drawCentredString(cx, y, rol_txt or "--")
-            y -= 45
+           
 
             # Folio
             c.setFillColor(black)

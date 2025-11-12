@@ -64,18 +64,34 @@ class RegisterParticipantView(APIView):
             )
 
             pdf_out = generar_credencial_pdf(participant)
+
+            # --- Devolver PDF (acepta bytes o ruta en disco) ---
             if isinstance(pdf_out, (bytes, bytearray)):
                 resp = HttpResponse(bytes(pdf_out), content_type="application/pdf")
-            else:
-                resp = FileResponse(open(pdf_out, "rb"), content_type="application/pdf")
-            resp["Content-Disposition"] = f'attachment; filename="{participant.clave}.pdf"'
-            return resp
+                resp["Content-Disposition"] = (
+                    f'attachment; filename="{participant.clave or "credencial"}.pdf"'
+                )
+                return resp
+
+            if isinstance(pdf_out, str) and os.path.exists(pdf_out):
+                return FileResponse(
+                    open(pdf_out, "rb"),
+                    as_attachment=True,
+                    filename=f'{participant.clave or "credencial"}.pdf',
+                    content_type="application/pdf",
+                )
+
+            # Si llegó aquí, no hubo PDF válido
+            return Response({"error": "No se pudo generar el PDF"}, status=500)
 
         except Exception as e:
             logger.error("REGISTER_ERROR: %s", e)
             logger.error("TRACE:\n%s", traceback.format_exc())
-            return Response({"error": "Server error", "detail": str(e)},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": "Server error", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+      
 
 # =======================
 # 2) Listado de participantes (panel admin)
