@@ -1,13 +1,13 @@
-# registro/views.py
-
 import csv
 import re
 import os
+import logging, traceback
+
 from django.http import FileResponse, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
-from django.db.models import Q
 from django.conf import settings
+from django.db import transaction
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -17,6 +17,7 @@ from .models import Participant
 from .serializers import ParticipantSerializer
 from .pdf_generator import generar_credencial_pdf
 
+logger = logging.getLogger(__name__)
 
 # =======================
 # Generación de folio
@@ -26,15 +27,15 @@ def generar_clave(plantel: str) -> str:
     """
     Genera folio por plantel con 4 dígitos:
     Primaria0001, Secundaria0001, Preparatoria0001, etc.
-    Toma cualquier folio existente que termine en números.
+    Busca el mayor consecutivo existente (terminación numérica) y suma 1.
     """
-    prefix = (plantel or "").strip().title()   # "Primaria" | "Secundaria" | "Preparatoria"
+    prefix = (plantel or "").strip().title()  # "Primaria"|"Secundaria"|"Preparatoria"
 
     existentes = (
         Participant.objects
         .filter(plantel=plantel)
         .exclude(clave__isnull=True)
-        .exclude(clave__exact="")
+        .exclude(clave__exact="")   # 🔹 evita cadenas vacías
         .values_list("clave", flat=True)
     )
 
@@ -52,60 +53,70 @@ def generar_clave(plantel: str) -> str:
     siguiente = max_n + 1
     return f"{prefix}{siguiente:04d}"
 
-
 # =======================
 # 1) Registro + generación de PDF
 # =======================
 
 class RegisterParticipantView(APIView):
+    @transaction.atomic
     def post(self, request):
-        serializer = ParticipantSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = ParticipantSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
+            data = serializer.validated_data
 
-        ADULTO_ROLES = ["ACOMPAÑANTE HOMBRE", "ACOMPAÑANTE MUJER",
-                        "ABUELITO", "ABUELITA", "TUTOR"]
-        role_value = (data.get("role") or "").upper()
-        plantel = data.get("plantel") or ""
+            # Normaliza
+            full_name  = (data.get("full_name") or "").strip()
+            plantel    = (data.get("plantel") or "").strip()
+            child_name = (data.get("child_name") or "").strip() or None
+            grado      = (data.get("grado") or "").strip() or None
+            role       = (data.get("role") or "").strip()
 
-        clave_generada = generar_clave(plantel) if role_value in ADULTO_ROLES else ""
+            # 🔹 Genera folio SIEMPRE (adultos y alumnos) para evitar "" duplicadas
+            clave_generada = generar_clave(plantel)
 
-        participant = Participant.objects.create(
-            full_name=data.get("full_name"),
-            plantel=plantel,
-            child_name=data.get("child_name", ""),
-            grado=data.get("grado", ""),
-            role=data.get("role"),
-            clave=clave_generada,
-        )
+            participant = Participant.objects.create(
+                full_name=full_name,
+                plantel=plantel,
+                child_name=child_name,
+                grado=grado,
+                role=role,
+                clave=clave_generada,   # nunca "" ni duplicada
+            )
 
-        pdf_path = generar_credencial_pdf(participant)
+            # Generar PDF (acepta bytes o ruta)
+            pdf_out = generar_credencial_pdf(participant)
+            if isinstance(pdf_out, (bytes, bytearray)):
+                pdf_bytes = bytes(pdf_out)
+                resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+            elif isinstance(pdf_out, str) and os.path.exists(pdf_out):
+                resp = FileResponse(open(pdf_out, "rb"), content_type="application/pdf")
+            else:
+                raise ValueError("El generador de PDF no devolvió bytes ni una ruta válida.")
 
-        filename = (participant.clave or "credencial") + ".pdf"
-        return FileResponse(
-            open(pdf_path, "rb"),
-            as_attachment=True,
-            filename=filename,
-            content_type="application/pdf",
-        )
+            filename = f'{participant.clave or "credencial"}.pdf'
+            resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+            return resp
 
+        except Exception as e:
+            logger.error("REGISTER_ERROR: %s", e)
+            logger.error("TRACE:\n%s", traceback.format_exc())
+            return Response(
+                {"error": "Server error", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 # =======================
-# 2) Listado de participantes (para el panel admin)
+# 2) Listado de participantes (panel admin)
 # =======================
 
 class ParticipantListView(APIView):
-    """
-    Devuelve la lista de participantes en JSON.
-    GET /api/participants/
-    """
     def get(self, request):
         qs = Participant.objects.all().order_by("-created_at", "-id")
         serializer = ParticipantSerializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 # =======================
 # 3) Exportar CSV
@@ -113,13 +124,11 @@ class ParticipantListView(APIView):
 
 class ExportParticipantsCSV(APIView):
     """
-    Descarga un CSV con todos los participantes.
-    GET /api/participants/export/
+    GET /api/participants/export_csv/
     """
     def get(self, request, *args, **kwargs):
         qs = Participant.objects.all().order_by("plantel", "role", "full_name")
-
-        response = HttpResponse(content_type="text/csv")
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = 'attachment; filename="participantes_maraton.csv"'
 
         writer = csv.writer(response)
@@ -137,9 +146,9 @@ class ExportParticipantsCSV(APIView):
         for p in qs:
             writer.writerow([
                 p.id,
-                p.clave,
-                p.plantel,
-                p.full_name or "",
+                p.clave or "",
+                p.full_name or "",   # 🔄 corrige el orden con el encabezado
+                p.plantel or "",
                 p.child_name or "",
                 p.grado or "",
                 p.role or "",
@@ -148,38 +157,17 @@ class ExportParticipantsCSV(APIView):
 
         return response
 
-
 # =======================
 # 4) Estadísticas simples
 # =======================
 
 class ParticipantsStats(APIView):
-    """
-    Devuelve estadísticas simples para el panel.
-    GET /api/participants/stats/
-    """
     def get(self, request):
         total = Participant.objects.count()
-
-        por_plantel = list(
-            Participant.objects.values("plantel")
-            .annotate(total=Count("id"))
-            .order_by("plantel")
-        )
-
-        por_role = list(
-            Participant.objects.values("role")
-            .annotate(total=Count("id"))
-            .order_by("role")
-        )
-
-        data = {
-            "total": total,
-            "por_plantel": por_plantel,
-            "por_role": por_role,
-        }
+        por_plantel = list(Participant.objects.values("plantel").annotate(total=Count("id")).order_by("plantel"))
+        por_role    = list(Participant.objects.values("role").annotate(total=Count("id")).order_by("role"))
+        data = {"total": total, "por_plantel": por_plantel, "por_role": por_role}
         return Response(data, status=status.HTTP_200_OK)
-
 
 # =======================
 # 5) Reimpresión de gafete
@@ -187,37 +175,30 @@ class ParticipantsStats(APIView):
 
 class ReprintPdfView(APIView):
     """
-    Reimprime un PDF dado un folio (clave) o un ID, vía ?q=
-    Ejemplos:
-      /api/participants/reprint/?q=Primaria0007
-      /api/participants/reprint/?q=12
+    /api/participants/reprint/?q=Primaria0007  ó  /api/participants/reprint/?q=12
     """
     def get(self, request, *args, **kwargs):
-        # 1) leer parámetro q de la URL
         q = request.query_params.get("q") or request.GET.get("q")
         if not q:
             return Response({"detail": "Falta parámetro q"}, status=400)
 
         qs = Participant.objects.all()
         participant = None
-
-        # 2) intentar primero por FOLIO (clave)
         try:
             participant = qs.get(clave__iexact=q)
         except Participant.DoesNotExist:
-            # 3) si no hay folio, intentar por ID numérico
             try:
                 participant = qs.get(pk=int(q))
             except (ValueError, Participant.DoesNotExist):
                 raise Http404("Participante no encontrado")
 
-        # 4) generar PDF y devolverlo
-        pdf_path = generar_credencial_pdf(participant)
-        filename = os.path.basename(pdf_path)
+        pdf_out = generar_credencial_pdf(participant)
+        if isinstance(pdf_out, (bytes, bytearray)):
+            resp = HttpResponse(bytes(pdf_out), content_type="application/pdf")
+        elif isinstance(pdf_out, str) and os.path.exists(pdf_out):
+            resp = FileResponse(open(pdf_out, "rb"), content_type="application/pdf")
+        else:
+            return Response({"error": "PDF inválido"}, status=500)
 
-        return FileResponse(
-            open(pdf_path, "rb"),
-            as_attachment=True,
-            filename=filename,
-            content_type="application/pdf",
-        )
+        resp["Content-Disposition"] = f'attachment; filename="{participant.clave or "credencial"}.pdf"'
+        return resp
