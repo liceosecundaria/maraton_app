@@ -8,6 +8,9 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from django.conf import settings
 from django.db import transaction
+# arriba
+from django.utils import timezone
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -78,13 +81,15 @@ class RegisterParticipantView(APIView):
             clave_generada = generar_clave(plantel)
 
             participant = Participant.objects.create(
-                full_name=full_name,
+                full_name=data.get("full_name"),
                 plantel=plantel,
-                child_name=child_name,
-                grado=grado,
-                role=role,
-                clave=clave_generada,   # nunca "" ni duplicada
-            )
+                child_name=data.get("child_name", ""),
+                grado=data.get("grado", ""),
+                role=data.get("role"),
+                clave=clave_generada,
+                updated_at=timezone.now(),   # 👈 HOTFIX: evita el NULL en Postgres
+)
+
 
             # Generar PDF (acepta bytes o ruta)
             pdf_out = generar_credencial_pdf(participant)
