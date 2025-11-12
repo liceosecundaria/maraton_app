@@ -25,97 +25,57 @@ logger = logging.getLogger(__name__)
 # =======================
 # Generación de folio
 # =======================
-
 def generar_clave(plantel: str) -> str:
-    """
-    Genera folio por plantel con 4 dígitos:
-    Primaria0001, Secundaria0001, Preparatoria0001, etc.
-    Busca el mayor consecutivo existente (terminación numérica) y suma 1.
-    """
-    prefix = (plantel or "").strip().title()  # "Primaria"|"Secundaria"|"Preparatoria"
-
-    existentes = (
-        Participant.objects
-        .filter(plantel=plantel)
-        .exclude(clave__isnull=True)
-        .exclude(clave__exact="")   # 🔹 evita cadenas vacías
-        .values_list("clave", flat=True)
-    )
-
+    prefix = (plantel or "").strip().title()  # Primaria|Secundaria|Preparatoria
+    existentes = (Participant.objects
+                  .filter(plantel=plantel)
+                  .exclude(clave__isnull=True)
+                  .exclude(clave__exact="")
+                  .values_list("clave", flat=True))
     max_n = 0
     for clave in existentes:
-        m = re.search(r'(\d+)$', (clave or ""))
+        import re
+        m = re.search(r'(\d+)$', clave or "")
         if m:
-            try:
-                n = int(m.group(1))
-                if n > max_n:
-                    max_n = n
-            except ValueError:
-                pass
-
-    siguiente = max_n + 1
-    return f"{prefix}{siguiente:04d}"
-
-# =======================
-# 1) Registro + generación de PDF
-# =======================
-
+            n = int(m.group(1))
+            if n > max_n:
+                max_n = n
+    return f"{prefix}{max_n+1:04d}"
 
 class RegisterParticipantView(APIView):
     @transaction.atomic
     def post(self, request):
         try:
-            serializer = ParticipantSerializer(data=request.data)
-            if not serializer.is_valid():
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            s = ParticipantSerializer(data=request.data)
+            if not s.is_valid():
+                return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+            data = s.validated_data
 
-            data = serializer.validated_data
-
-            # Normaliza
-            full_name  = (data.get("full_name") or "").strip()
-            plantel    = (data.get("plantel") or "").strip()
-            child_name = (data.get("child_name") or "").strip() or None
-            grado      = (data.get("grado") or "").strip() or None
-            role       = (data.get("role") or "").strip()
-
-            # Define roles de adulto y calcula role_value en MAYÚSCULAS
-            ADULTO_ROLES = ["ACOMPAÑANTE HOMBRE", "ACOMPAÑANTE MUJER", "ABUELITO", "ABUELITA", "TUTOR"]
-            role_value = (role or "").upper()
-
-            # Genera folio SOLO para adultos; para alumnos deja None (no vacío)
-            clave_generada = generar_clave(plantel) if role_value in ADULTO_ROLES else None
+            plantel = (data.get("plantel") or "").strip()
+            clave_generada = generar_clave(plantel)  # ← SIEMPRE
 
             participant = Participant.objects.create(
-                full_name=full_name,
+                full_name=(data.get("full_name") or "").strip(),
                 plantel=plantel,
-                child_name=child_name,
-                grado=grado,
-                role=role_value,     # guarda ya en MAYÚSCULAS
-                clave=clave_generada # None para alumnos, folio para adultos
+                child_name=(data.get("child_name") or "").strip(),
+                grado=(data.get("grado") or "").strip(),
+                role=(data.get("role") or "").strip().upper(),
+                clave=clave_generada,
             )
 
-            # Generar PDF (acepta bytes o ruta)
             pdf_out = generar_credencial_pdf(participant)
             if isinstance(pdf_out, (bytes, bytearray)):
-                pdf_bytes = bytes(pdf_out)
-                resp = HttpResponse(pdf_bytes, content_type="application/pdf")
-            elif isinstance(pdf_out, str) and os.path.exists(pdf_out):
-                resp = FileResponse(open(pdf_out, "rb"), content_type="application/pdf")
+                resp = HttpResponse(bytes(pdf_out), content_type="application/pdf")
             else:
-                raise ValueError("El generador de PDF no devolvió bytes ni una ruta válida.")
-
-            filename = f'{participant.clave or "credencial"}.pdf'
-            resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+                resp = FileResponse(open(pdf_out, "rb"), content_type="application/pdf")
+            resp["Content-Disposition"] = f'attachment; filename="{participant.clave}.pdf"'
             return resp
 
         except Exception as e:
             logger.error("REGISTER_ERROR: %s", e)
             logger.error("TRACE:\n%s", traceback.format_exc())
-            return Response(
-                {"error": "Server error", "detail": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
+            return Response({"error": "Server error", "detail": str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # =======================
 # 2) Listado de participantes (panel admin)
