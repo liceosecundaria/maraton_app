@@ -87,7 +87,7 @@ class RegisterParticipantView(APIView):
                 grado=data.get("grado", ""),
                 role=data.get("role"),
                 clave=clave_generada,
-                updated_at=timezone.now(),   # 👈 HOTFIX: evita el NULL en Postgres
+                
 )
 
 
