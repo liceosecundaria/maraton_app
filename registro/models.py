@@ -28,7 +28,8 @@ class Participant(models.Model):
     child_name = models.CharField(max_length=150, blank=True, null=True)
     grado      = models.CharField(max_length=120, blank=True, null=True)
     role       = models.CharField(max_length=40, choices=ROLE_CHOICES)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)   # 👈 importante
     # FOLIO
     clave = models.CharField(
         max_length=40,
