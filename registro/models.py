@@ -22,15 +22,17 @@ ROLE_CHOICES = [
     ("ALUMNOS LMA PREPM","ALUMNOS LMA Preparatoria (mujeres)"),
 ]
 class Participant(models.Model):
-    full_name  = models.CharField(max_length=200)
-    plantel    = models.CharField(max_length=50)   # Primaria/Secundaria/Preparatoria
+    full_name = models.CharField(max_length=200)
+    plantel = models.CharField(max_length=50)
     child_name = models.CharField(max_length=200, blank=True, default="")
-    grado      = models.CharField(max_length=80,  blank=True, default="")
-    role       = models.CharField(max_length=60)
-    # Folio (puede ser nulo/vacío a nivel BD; lo llenamos en la vista)
-    clave      = models.CharField(max_length=32, unique=True, null=True, blank=True)
+    grado = models.CharField(max_length=100, blank=True, default="")
+    role = models.CharField(max_length=80)
+    # Folio: permite null/blank para la creación y lo llenas en views
+    clave = models.CharField(max_length=50, unique=True, null=True, blank=True)
 
+    # 🔹 IMPORTANTE: mantener estos dos
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) 
     # (NO pongas updated_at si ya te dio guerra)
 
     def __str__(self):
