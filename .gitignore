@@ -1,9 +1,32 @@
-venv/
+# --- Python / Django ---
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.egg-info/
+.env
+.env.*
+*.log
+
+# Virtual env
+venv/
+.venv/
+
+# DB local y archivos generados
 db.sqlite3
 media/
 staticfiles/
-*.log
+
+# --- Frontend ---
+frontend/node_modules/
+frontend/dist/
+*.map
+
+# --- IDE / SO ---
+.vscode/
+.idea/
+.DS_Store
+
+# PDFs de prueba en raíz (si no quieres versionarlos)
+credencial.pdf
+credencial_test.pdf

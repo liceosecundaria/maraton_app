@@ -5,6 +5,7 @@ import "../form.css";
 const API_BASE = "https://maraton-lma-backend.onrender.com/api";
 
 
+
 function RegistroForm() {
   const [formData, setFormData] = useState({
     full_name: "",
