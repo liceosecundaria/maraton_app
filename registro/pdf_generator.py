@@ -1,14 +1,14 @@
 import io
 import os
-from datetime import datetime, timedelta
+import re
 
 from django.conf import settings
-from pytz import timezone
+from django.utils import timezone
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.utils import ImageReader
 from reportlab.lib.colors import HexColor, black
+from reportlab.lib.utils import ImageReader
 
 from .models import Participant
 
@@ -20,37 +20,36 @@ GRIS  = HexColor("#666666")
 
 def generar_credencial_pdf(participant: Participant) -> str:
     """
-    Genera un PDF tamaño carta con dos gafetes:
-    - Arriba: Acompañante (adulto)
-    - Abajo: Alumno
+    Genera un PDF en hoja carta con dos gafetes (adulto arriba, alumno abajo).
     Devuelve la ruta absoluta del PDF generado.
     """
-    # Tamaño carta en puntos (72 dpi)
-    page_width  = 8.5 * 72
-    page_height = 11  * 72
+    # Tamaño carta
+    page_width  = 8.5 * 72   # 612
+    page_height = 11  * 72   # 792
     badge_height = page_height / 2.0
     badge_width  = page_width
 
-    # Rutas de imágenes
+    # Imágenes
     logo_path  = os.path.join(settings.BASE_DIR, "static", "logo_lma.png")
     zorro_path = os.path.join(settings.BASE_DIR, "static", "zorro_maraton.png")
     liceo_path = os.path.join(settings.BASE_DIR, "static", "liceo.png")
 
-    logo_img  = ImageReader(logo_path)  if os.path.exists(logo_path)  else None
-    zorro_img = ImageReader(zorro_path) if os.path.exists(zorro_path) else None
-    liceo_img = ImageReader(liceo_path) if os.path.exists(liceo_path) else None
+    logo_img   = ImageReader(logo_path)  if os.path.exists(logo_path)  else None
+    zorro_img  = ImageReader(zorro_path) if os.path.exists(zorro_path) else None
+    liceo_img  = ImageReader(liceo_path) if os.path.exists(liceo_path) else None
 
-    # Carpeta de salida
+    # Carpeta de salida en MEDIA_ROOT/credenciales
     out_dir = os.path.join(settings.MEDIA_ROOT, "credenciales")
     os.makedirs(out_dir, exist_ok=True)
+
     folio = participant.clave or "SIN-FOLIO"
     pdf_path = os.path.join(out_dir, f"{folio}.pdf")
 
     c = canvas.Canvas(pdf_path, pagesize=(page_width, page_height))
 
-    # -----------------------------------
-    # Función interna para cada gafete
-    # -----------------------------------
+    # ------------------------------------------------------
+    # FUNCIÓN INTERNA: Dibuja cada gafete (Adulto / Alumno)
+    # ------------------------------------------------------
     def dibujar_gafete(x0, y0, alto, modo: str):
         margin = 18
         ix = x0 + margin
@@ -58,12 +57,12 @@ def generar_credencial_pdf(participant: Participant) -> str:
         iw = badge_width - 2 * margin
         ih = alto - 2 * margin
 
-        # Marca de agua (logo LMA)
+        # ====== Marca de agua (logo LMA centrado) ======
         try:
             if liceo_img:
                 c.saveState()
                 if hasattr(c, "setFillAlpha"):
-                    c.setFillAlpha(0.08)
+                    c.setFillAlpha(0.08)  # 8% opacidad
                 center_x = ix + iw / 2.0
                 center_y = iy + ih / 2.0
                 wm_size = min(iw, ih) * 0.60
@@ -77,21 +76,20 @@ def generar_credencial_pdf(participant: Participant) -> str:
                     mask="auto",
                 )
                 c.restoreState()
-        except Exception:
-            # no rompemos el PDF si falla la imagen
-            pass
+        except Exception as e:
+            print("WATERMARK_ERROR:", e)
 
         # Marco
         c.setStrokeColor(AZUL)
         c.setLineWidth(2)
         c.rect(ix, iy, iw, ih, stroke=1, fill=0)
 
-        # ========== ENCABEZADO ==========
+        # =================== ENCABEZADO ===================
         header_top_pad = 16
         header_h       = 110
         header_top     = iy + ih - header_top_pad
 
-        # Logo LMA
+        # Logo LMA (más grande)
         if logo_img:
             LOGO_H = 100
             LOGO_W = 200
@@ -106,7 +104,7 @@ def generar_credencial_pdf(participant: Participant) -> str:
                 mask="auto",
             )
 
-        # Zorro
+        # Zorro a la derecha
         if zorro_img:
             ZORRO_H = 100
             ZORRO_W = 210
@@ -130,7 +128,7 @@ def generar_credencial_pdf(participant: Participant) -> str:
         # Franjas
         c.setLineWidth(4)
         base = header_top - 50
-        margen_lateral = 150
+        margen_lateral = 150  # más cortas = franjas más largas
 
         c.setStrokeColor(AZUL)
         c.line(ix + margen_lateral, base, ix + iw - margen_lateral, base)
@@ -139,13 +137,15 @@ def generar_credencial_pdf(participant: Participant) -> str:
         c.setStrokeColor(VERDE)
         c.line(ix + margen_lateral, base - 16, ix + iw - margen_lateral, base - 16)
 
-        # ========= CONTENIDO =========
-        y = header_top - header_h - 40
+        # =================== CONTENIDO ===================
+        # un poco más abajo para despegar del encabezado
+        y = header_top - header_h - 45
 
         nombre_adulto = (participant.full_name or "").upper()
         nombre_alumno = (participant.child_name or "").upper()
         grado_txt     = (participant.grado or "").upper()
 
+        # categoría: usa el label bonito del ROLE_CHOICES
         try:
             rol_txt = (participant.get_role_display() or "").upper()
         except Exception:
@@ -154,13 +154,13 @@ def generar_credencial_pdf(participant: Participant) -> str:
         cx = ix + iw / 2
 
         if modo == "ADULTO":
-            # Nombre acompañante
+            # Nombre del adulto
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 28)
             c.drawCentredString(cx, y, nombre_adulto or "ACOMPAÑANTE")
             y -= 36
 
-            # Alumno / grado
+            # Alumno y grado
             c.setFillColor(GRIS)
             c.setFont("Helvetica", 13)
             c.drawCentredString(
@@ -170,7 +170,7 @@ def generar_credencial_pdf(participant: Participant) -> str:
             )
             y -= 28
 
-            # Categoría (rol)
+            # Categoría del adulto
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 18)
             c.drawCentredString(cx, y, rol_txt or "--")
@@ -179,49 +179,62 @@ def generar_credencial_pdf(participant: Participant) -> str:
             # Folio
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 42)
-            c.drawCentredString(cx, (participant.clave or "SIN FOLIO"))
+            c.drawCentredString(
+                cx,
+                y,
+                (participant.clave or "").replace("FOLIO: ", ""),
+            )
             y -= 40
 
         else:  # ALUMNO
-            # Nombre alumno
+            # Nombre del alumno
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 30)
-            c.drawCentredString(cx, nombre_alumno or "ALUMNO")
+            c.drawCentredString(cx, y, nombre_alumno or "ALUMNO")
             y -= 36
 
             # Grado
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 18)
-            c.drawCentredString(cx, f"GRADO: {grado_txt or '--'}")
-            y -= 35
+            c.drawCentredString(cx, y, f"GRADO: {grado_txt or '--'}")
+            y -= 40
 
-            # Categoría (mismo rol, pero centrado)
+            # Categoría del alumno (misma categoría que el registro)
             c.setFillColor(AZUL)
             c.setFont("Helvetica-Bold", 16)
-            c.drawCentredString(cx, rol_txt or "--")
+            c.drawCentredString(cx, y, rol_txt or "--")
             y -= 45
 
             # Folio
             c.setFillColor(black)
             c.setFont("Helvetica-Bold", 40)
-            c.drawCentredString(cx, (participant.clave or "SIN FOLIO"))
-            y -= 40
+            c.drawCentredString(
+                cx,
+                y,
+                (participant.clave or "").replace("FOLIO: ", ""),
+            )
+            y -= 60
 
         # Leyenda inferior
         c.setFillColor(GRIS)
         c.setFont("Helvetica-Oblique", 11)
-        c.drawCentredString(cx, iy + 20, "Imprime y presenta este gafete el día del evento")
+        c.drawCentredString(
+            cx,
+            iy + 20,
+            "Imprime y presenta este gafete el día del evento",
+        )
 
-        # Fecha (hora de CDMX aprox. UTC-6)
-        mx_timezone = timezone(timedelta(hours=-6))
-        hora_local = datetime.now(mx_timezone).strftime("%d/%m/%Y %H:%M")
+        # Fecha (hora local según configuración de Django)
+        hora_local = timezone.localtime().strftime("%d/%m/%Y %H:%M")
         c.setFillColor(GRIS)
         c.setFont("Helvetica", 9)
         c.drawRightString(ix + iw - 10, iy + 16, f"Generado: {hora_local}")
 
-    # Dibuja los dos gafetes
+    # ------------------------------------------------------
+    # DIBUJAR AMBOS GAFETES
+    # ------------------------------------------------------
     dibujar_gafete(0, badge_height, badge_height, "ADULTO")
-    dibujar_gafete(0, 0,           badge_height, "ALUMNO")
+    dibujar_gafete(0, 0,            badge_height, "ALUMNO")
 
     # Línea punteada de corte
     c.setStrokeColor(HexColor("#9E9E9E"))
