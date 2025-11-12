@@ -60,6 +60,7 @@ def generar_clave(plantel: str) -> str:
 # 1) Registro + generación de PDF
 # =======================
 
+
 class RegisterParticipantView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -77,19 +78,21 @@ class RegisterParticipantView(APIView):
             grado      = (data.get("grado") or "").strip() or None
             role       = (data.get("role") or "").strip()
 
-            # 🔹 Genera folio SIEMPRE (adultos y alumnos) para evitar "" duplicadas
-            clave_generada = generar_clave(plantel)
+            # Define roles de adulto y calcula role_value en MAYÚSCULAS
+            ADULTO_ROLES = ["ACOMPAÑANTE HOMBRE", "ACOMPAÑANTE MUJER", "ABUELITO", "ABUELITA", "TUTOR"]
+            role_value = (role or "").upper()
+
+            # Genera folio SOLO para adultos; para alumnos deja None (no vacío)
+            clave_generada = generar_clave(plantel) if role_value in ADULTO_ROLES else None
 
             participant = Participant.objects.create(
-                full_name=data.get("full_name"),
+                full_name=full_name,
                 plantel=plantel,
-                child_name=data.get("child_name", ""),
-                grado=data.get("grado", ""),
-                role=data.get("role"),
-                clave=clave_generada,
-                
-)
-
+                child_name=child_name,
+                grado=grado,
+                role=role_value,     # guarda ya en MAYÚSCULAS
+                clave=clave_generada # None para alumnos, folio para adultos
+            )
 
             # Generar PDF (acepta bytes o ruta)
             pdf_out = generar_credencial_pdf(participant)
@@ -112,6 +115,7 @@ class RegisterParticipantView(APIView):
                 {"error": "Server error", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
 
 # =======================
 # 2) Listado de participantes (panel admin)
