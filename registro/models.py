@@ -33,10 +33,12 @@ class Participant(models.Model):
     # FOLIO
     clave = models.CharField(
         max_length=40,
-        blank=True,
-        editable=False,
         unique=True,
-    )
+        null=True,     # <-- importante
+        blank=True,    # <-- importante
+        editable=False,
+)
+
 
     created_at = models.DateTimeField(auto_now_add=True)
 
